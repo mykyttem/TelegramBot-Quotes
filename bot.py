@@ -15,6 +15,7 @@ import time
 start_btns = [
     [types.KeyboardButton(text='Запуск ✈')],
     [types.KeyboardButton(text='Налаштування ⚙')],
+    [types.KeyboardButton(text='Мої улюблені цитати 📝💖')],
     [types.KeyboardButton(text='Зупинити ❌')],
 ]
 keyboard_start_btns = types.ReplyKeyboardMarkup(keyboard=start_btns, resize_keyboard=True)
@@ -34,12 +35,14 @@ async def start_btns(message: types.Message):
     # push data
     if not ref.child(username).get():
         ref.child(username).set(
-            {"id": id_user, "time-quotes": 1800}
+            {"id": id_user, "time-quotes": 1800, "favorite": [0]}
         )
 
 
+#TODO: delete repeated at each launch, or random quote
 @dp.message_handler(Text(equals=['Запуск ✈']))
 async def launching(message: types.Message):
+    """ Send quotes from file, and inline btn 'add favorite', save in DB num quote """
 
     # data user
     username = message.from_user.username
@@ -52,13 +55,84 @@ async def launching(message: types.Message):
     for i in range(100):
 
         time.sleep(user_time_quotes)
-        await message.answer(quotes[i])
+
+        btns_add_favorite = [
+            [types.InlineKeyboardButton(text="Добавити в улюблені 📝", callback_data=f"add_favorite_{i}")]
+        ]
+        keyboard_btns = types.InlineKeyboardMarkup(inline_keyboard=btns_add_favorite)
+
+        await message.answer(quotes[i], reply_markup=keyboard_btns)
+
+
+""" My favorites """
+
+@dp.callback_query_handler(lambda c: c.data.startswith('add_favorite_'))
+async def add_favorite(callback_query: types.CallbackQuery):
+    await callback_query.answer()
+
+    # Convert num_quote to an integer
+    num_quote = int(callback_query.data.split('_')[2])
+
+    # Getting user data
+    username = callback_query.from_user.username
+    user_data = ref.child(username).get()
+    user_list_favorite = user_data.get("favorite", [])
+
+    # Append the new favorite to the list
+    user_list_favorite.append(num_quote)
+
+    # Update the "favorite" field in the user_data
+    user_data["favorite"] = user_list_favorite
+
+    # Save the updated user_data in the database
+    ref.child(username).update(user_data)
+
+    await callback_query.message.answer('Успішно добавленно 📝✅') 
+
+
+@dp.message_handler(Text(equals=['Мої улюблені цитати 📝💖']))
+async def my_favorite(message: types.Message):
+    
+    # data user, getting list favorites quotes
+    username = message.from_user.username
+    user_data = ref.child(username).get()
+    user_list_favorite = user_data.get("favorite")
+
+    for num in user_list_favorite:
+
+        btns_delete_favorite = [
+            [types.InlineKeyboardButton(text="Видалити з улюблених ❌", callback_data=f"delete_favorite_{num}")]
+        ]
+        keyboard_btns = types.InlineKeyboardMarkup(inline_keyboard=btns_delete_favorite)
+
+        await message.answer(quotes[num], reply_markup=keyboard_btns)
+
+
+@dp.callback_query_handler(lambda c: c.data.startswith('delete_favorite_'))
+async def delete_favorite(callback_query: types.CallbackQuery):
+    await callback_query.answer()
+
+    num_quote = int(callback_query.data.split('_')[2])
+
+    # data user, getting list favorites quotes
+    username = callback_query.from_user.username
+    user_data = ref.child(username).get()
+    user_list_favorite = user_data.get("favorite", [])
+
+    # delete quote
+    user_list_favorite.remove(num_quote)
+
+    # Update the "favorite" field in the user_data
+    user_data["favorite"] = user_list_favorite
+
+    # Save the updated user_data in the database
+    ref.child(username).update(user_data)    
+    await callback_query.message.answer('Видалено 🗑✅')
 
 
 @dp.message_handler(Text(equals=['Назад ⏪']))
 async def btn_back(message: types.Message):
     await message.answer('Головне меню', reply_markup=keyboard_start_btns)
-
 
 
 """ Settings """
