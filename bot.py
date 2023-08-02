@@ -1,12 +1,14 @@
 from aiogram import executor
 from aiogram import types
 from aiogram.dispatcher.filters import Text
+from aiogram.dispatcher import FSMContext
 
 from config import dp
 from firebase_config import ref
 from vsviti_motivation import quotes
 
-import time
+import random
+import asyncio
 
 
 """ Main functionals """
@@ -39,10 +41,13 @@ async def start_btns(message: types.Message):
         )
 
 
-#TODO: delete repeated at each launch, or random quote
 @dp.message_handler(Text(equals=['Запуск ✈']))
-async def launching(message: types.Message):
+async def launching(message: types.Message, state: FSMContext):
     """ Send quotes from file, and inline btn 'add favorite', save in DB num quote """
+    
+    # save value False, if launching start loop, else stop. Pass next handler
+    async with state.proxy() as data:
+        data['should_stop'] = False    
 
     # data user
     username = message.from_user.username
@@ -50,18 +55,39 @@ async def launching(message: types.Message):
     user_time_quotes = user_data.get("time-quotes")
 
     # send quote
-    await message.answer('Запустилося✅\n По стандарту, від буде відправляти кожні пів години, одну цитату, можете змінити в налаштуваннях')
+    await message.answer('Запустилося✅\n По стандарту, буде відправляти кожні пів години одну цитату, можете змінити в налаштуваннях')
 
-    for i in range(100):
+    while True:
+        data = await state.get_data()
+        should_stop = data.get('should_stop', False)
 
-        time.sleep(user_time_quotes)
+        if should_stop:
+            break
 
-        btns_add_favorite = [
-            [types.InlineKeyboardButton(text="Добавити в улюблені 📝", callback_data=f"add_favorite_{i}")]
-        ]
-        keyboard_btns = types.InlineKeyboardMarkup(inline_keyboard=btns_add_favorite)
+        random_num = random.randint(2, 99)
+        
+        try:
+            btns_add_favorite = [
+                [types.InlineKeyboardButton(text="Добавити в улюблені 📝", callback_data=f"add_favorite_{random_num}")]
+            ]
+            keyboard_btns = types.InlineKeyboardMarkup(inline_keyboard=btns_add_favorite)
 
-        await message.answer(quotes[i], reply_markup=keyboard_btns)
+            await message.answer(quotes[random_num], reply_markup=keyboard_btns)
+            await asyncio.sleep(user_time_quotes)
+
+        except IndexError:
+            continue
+
+
+@dp.message_handler(Text(equals=['Зупинити ❌']))
+async def stop(message: types.Message, state: FSMContext):
+
+    # save variable True, if user stopping loop 
+    async with state.proxy() as data:
+        data['should_stop'] = True
+
+    await message.answer('Зупинено ⏱❌')
+    
 
 
 """ My favorites """
