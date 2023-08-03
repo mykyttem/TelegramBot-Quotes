@@ -48,7 +48,7 @@ async def start_btns(message: types.Message):
     # push data
     if not ref.child(username).get():
         ref.child(username).set(
-            {"id": id_user, "time-quotes": 1800, "favorite": [0]}
+            {"id": id_user, "time-quotes": 1800, "favorite": [0], "category": "all"}
         )
 
 
@@ -64,6 +64,7 @@ async def launching(message: types.Message, state: FSMContext):
     username = message.from_user.username
     user_data = ref.child(username).get()
     user_time_quotes = user_data.get("time-quotes")
+    user_category = user_data.get("category")
 
     # send quote
     await message.answer('Запустилося✅\n По стандарту, буде відправляти кожні пів години одну цитату, можете змінити в налаштуваннях')
@@ -88,11 +89,20 @@ async def launching(message: types.Message, state: FSMContext):
             author = quote["author"]
             category = quote["category"]
 
+            if user_category == "Всі":
 
-            result = f"{text}\n Автор - {author}\n Категорія - {category}"
+                result = f"{text}\n Автор - {author}\n Категорія - {category}"
 
-            await message.answer(result, reply_markup=keyboard_btns)
-            await asyncio.sleep(user_time_quotes)
+                await message.answer(result, reply_markup=keyboard_btns)
+                await asyncio.sleep(user_time_quotes)
+
+            elif user_category == category:
+
+                result = f"{text}\n Автор - {author}\n Категорія - {category}"
+
+                await message.answer(result, reply_markup=keyboard_btns)
+                await asyncio.sleep(user_time_quotes)
+
 
         except IndexError:
             continue
@@ -199,6 +209,7 @@ async def btn_back(message: types.Message):
 async def settings(message: types.Message):
     btns_settings = [
         [types.KeyboardButton(text='Час відправки цитати ⏱')],
+        [types.KeyboardButton(text='Категорія 🧾')],
         [types.KeyboardButton(text='Назад ⏪')]
     ]
 
@@ -239,6 +250,39 @@ async def choice_time(callback_query: types.CallbackQuery):
     ref.child(username).update(user_data)
 
     await callback_query.message.answer('Налаштування оновлені ✅') 
+
+
+@dp.message_handler(Text(equals=['Категорія 🧾']))
+async def settings_category(message: types.Message):
+
+    btns_category = [
+        [types.InlineKeyboardButton(text='з Книг 📚', callback_data='category_з Книг')],
+        [types.InlineKeyboardButton(text='з Фільмів 🎬', callback_data='category_з Фільмів')],
+        [types.InlineKeyboardButton(text='Відомих людей', callback_data='category_Відомих людей')],
+        [types.InlineKeyboardButton(text='Всі', callback_data='category_Всі')],
+    ]
+
+    keyboard_btns = types.InlineKeyboardMarkup(inline_keyboard=btns_category)
+    await message.answer('Оберіть категорію цитат', reply_markup=keyboard_btns)
+
+
+@dp.callback_query_handler(lambda c: c.data.startswith('category_'))
+async def choice_category_settings(callback_query: types.CallbackQuery):
+    await callback_query.answer()
+
+    select_category = callback_query.data.split('_')[1]
+
+    # change data user
+    username = callback_query.from_user.username
+    user_data = ref.child(username).get()
+
+    # update
+    user_data["category"] = select_category
+    ref.child(username).update(user_data)
+
+    
+    await callback_query.message.answer('Налаштування оновлені ✅') 
+    await callback_query.message.answer(select_category) 
 
 
 if __name__ == '__main__':
