@@ -2,8 +2,6 @@ from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 
 
-#TODO: not parse, delete quotes "Від імені автора"
-
 class BaseCrawler(CrawlSpider):
     allowed_domains = ["tsytaty.com"]
 
@@ -18,11 +16,20 @@ class BaseCrawler(CrawlSpider):
         author = quote.css(".text > blockquote > footer > cite > a::text").getall()
         category = quote.css(".category > a::text").getall()
 
-        return {
-            "text": text,
-            "author": author,
-            "category": category
-        }
+        text = " ".join(text).strip()
+        author = " ".join(author).strip()
+        category = " ".join(category).strip()
+
+        # check text value
+        result = {}
+        if text and author and category and not author == "від імені автора":
+            result["text"] = text
+            result["author"] = author
+            result["category"] = category
+
+
+        if result:
+            return result
 
 
 class All_Quotes(BaseCrawler):
@@ -42,7 +49,7 @@ class Books(BaseCrawler):
 
     def parse_books(self, response):
         quotes = response.css(".box_in")
-        
+
         for quote in quotes:
             yield self.parse_quotes(quote)
 
@@ -53,7 +60,7 @@ class Movies(BaseCrawler):
 
     def parse_movies(self, response):
         quotes = response.css(".box_in")
-        
+
         for quote in quotes:
             yield self.parse_quotes(quote)
 
@@ -64,7 +71,7 @@ class famousPeople(BaseCrawler):
 
     def parse_famousPeople(self, response):
         quotes = response.css(".box_in")
-        
+
         for quote in quotes:
             yield self.parse_quotes(quote)
 
@@ -73,10 +80,9 @@ class Life(BaseCrawler):
     name = "Life"
     start_urls = ["https://tsytaty.com/pro-zhyttya/"]
 
-
     def parse_Life(self, response):
         quotes = response.css(".box_in")
-        
+
         for quote in quotes:
             yield self.parse_quotes(quote)
 
@@ -88,7 +94,7 @@ class Happiness(BaseCrawler):
 
     def parse_Happiness(self, response):
         quotes = response.css(".box_in")
-        
+
         for quote in quotes:
             yield self.parse_quotes(quote)
 
@@ -100,7 +106,7 @@ class Love(BaseCrawler):
 
     def parse_Love(self, response):
         quotes = response.css(".box_in")
-        
+
         for quote in quotes:
             yield self.parse_quotes(quote)
 
@@ -112,7 +118,7 @@ class Friendship(BaseCrawler):
 
     def parse_Friendship(self, response):
         quotes = response.css(".box_in")
-        
+
         for quote in quotes:
             yield self.parse_quotes(quote)
 
@@ -124,7 +130,7 @@ class Motivations(BaseCrawler):
 
     def parse_Motivations(self, response):
         quotes = response.css(".box_in")
-        
+
         for quote in quotes:
             yield self.parse_quotes(quote)
 
@@ -136,7 +142,7 @@ class Art(BaseCrawler):
 
     def parse_Art(self, response):
         quotes = response.css(".box_in")
-        
+
         for quote in quotes:
             yield self.parse_quotes(quote)
 
@@ -148,7 +154,7 @@ class Sport(BaseCrawler):
 
     def parse_Sport(self, response):
         quotes = response.css(".box_in")
-        
+
         for quote in quotes:
             yield self.parse_quotes(quote)
 
@@ -157,10 +163,9 @@ class FaithInMyself(BaseCrawler):
     name = "FaithInMyself"
     start_urls = ["https://tsytaty.com/motyvazia/pro-viru-v-sebe/"]
 
-
     def parse_FaithInMyself(self, response):
         quotes = response.css(".box_in")
-        
+
         for quote in quotes:
             yield self.parse_quotes(quote)
 
@@ -169,10 +174,9 @@ class SuccessAndSuccess(BaseCrawler):
     name = "SuccessAndSuccess"
     start_urls = ["https://tsytaty.com/motyvazia/pro-uspih/"]
 
-
     def parse_SuccessAndSuccess(self, response):
         quotes = response.css(".box_in")
-        
+
         for quote in quotes:
             yield self.parse_quotes(quote)
 
@@ -181,10 +185,9 @@ class Season(BaseCrawler):
     name = "_Season"
     start_urls = ["https://tsytaty.com/pro-pory-roku/"]
 
-
     def parse_Season(self, response):
         quotes = response.css(".box_in")
-        
+
         for quote in quotes:
             yield self.parse_quotes(quote)
 
@@ -193,9 +196,8 @@ class School(BaseCrawler):
     name = "Season"
     start_urls = ["https://tsytaty.com/shkola/"]
 
-
     def parse_School(self, response):
         quotes = response.css(".box_in")
-        
+
         for quote in quotes:
             yield self.parse_quotes(quote)

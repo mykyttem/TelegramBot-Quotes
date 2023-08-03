@@ -5,10 +5,21 @@ from aiogram.dispatcher import FSMContext
 
 from config import dp
 from firebase_config import ref
-from vsviti_motivation import quotes
 
 import random
 import asyncio
+import os
+import json
+
+# read file
+folder_path = "results_scrapy"
+
+# path file
+file_path = os.path.join(folder_path, "quotes.json")
+
+with open(file_path, 'r', encoding='utf-8') as file:
+    quotes = json.load(file)
+
 
 
 """ Main functionals """
@@ -64,7 +75,7 @@ async def launching(message: types.Message, state: FSMContext):
         if should_stop:
             break
 
-        random_num = random.randint(2, 99)
+        random_num = random.randint(0, 3000)
         
         try:
             btns_add_favorite = [
@@ -72,7 +83,15 @@ async def launching(message: types.Message, state: FSMContext):
             ]
             keyboard_btns = types.InlineKeyboardMarkup(inline_keyboard=btns_add_favorite)
 
-            await message.answer(quotes[random_num], reply_markup=keyboard_btns)
+            quote = quotes[random_num]
+            text = quote["text"]
+            author = quote["author"]
+            category = quote["category"]
+
+
+            result = f"{text}\n Автор - {author}\n Категорія - {category}"
+
+            await message.answer(result, reply_markup=keyboard_btns)
             await asyncio.sleep(user_time_quotes)
 
         except IndexError:
@@ -124,14 +143,27 @@ async def my_favorite(message: types.Message):
     user_data = ref.child(username).get()
     user_list_favorite = user_data.get("favorite")
 
-    for num in user_list_favorite:
+    if user_list_favorite:
 
-        btns_delete_favorite = [
-            [types.InlineKeyboardButton(text="Видалити з улюблених ❌", callback_data=f"delete_favorite_{num}")]
-        ]
-        keyboard_btns = types.InlineKeyboardMarkup(inline_keyboard=btns_delete_favorite)
+        for num in user_list_favorite:
 
-        await message.answer(quotes[num], reply_markup=keyboard_btns)
+            btns_delete_favorite = [
+                [types.InlineKeyboardButton(text="Видалити з улюблених ❌", callback_data=f"delete_favorite_{num}")]
+            ]
+            keyboard_btns = types.InlineKeyboardMarkup(inline_keyboard=btns_delete_favorite)
+
+
+            quote = quotes[num]
+            text = quote["text"]
+            author = quote["author"]
+            category = quote["category"]
+
+
+            result = f"{text}\n Автор - {author}\n Категорія - {category}"
+            await message.answer(result, reply_markup=keyboard_btns)
+    
+    else:
+        await message.answer("Ви нічого не добавили 😕")
 
 
 @dp.callback_query_handler(lambda c: c.data.startswith('delete_favorite_'))
