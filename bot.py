@@ -1,15 +1,14 @@
-from aiogram import executor
-from aiogram import types
+from aiogram import executor, types
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
-
-from config import dp
-from firebase_config import ref
 
 import random
 import asyncio
 import os
 import json
+
+from config import dp, ref
+
 
 # read file
 folder_path = "results_scrapy"
