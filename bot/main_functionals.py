@@ -151,12 +151,22 @@ async def stop(message: types.Message, state: FSMContext):
     await message.answer(trans('Зупинено ⏱❌', dest=user_language).text)
     
 
-@dp.message_handler(Text(equals=['Назад ⏪', 'back ⏪']))
+@dp.message_handler(Text(equals=['Назад ⏪', 'Back ⏪']))
 async def btn_back(message: types.Message):
 
     username = message.from_user.username
     user_data = ref.child(username).get()
     user_language = user_data.get("language")
 
-    await message.answer(trans('Головне меню', dest=user_language).text)
-    beginning_btns(message)
+    # start buttons
+    start_btns = [
+        [types.KeyboardButton(text=trans('Запуск ✈', dest=user_language).text)],
+        [types.KeyboardButton(text=trans('Налаштування ⚙', dest=user_language).text)],
+        [types.KeyboardButton(text=trans('Мої улюблені цитати 📝💖', dest=user_language).text)],
+        [types.KeyboardButton(text=trans("Зв'язок 💬", dest=user_language).text)],
+        [types.KeyboardButton(text=trans('Зупинити ❌', dest=user_language).text)],
+    ]
+    keyboard_start_btns = types.ReplyKeyboardMarkup(keyboard=start_btns, resize_keyboard=True)
+
+
+    await message.answer(trans('Головне меню', dest=user_language).text, reply_markup=keyboard_start_btns)

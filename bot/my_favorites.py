@@ -3,6 +3,7 @@ from aiogram.dispatcher.filters import Text
 
 from config import dp, ref
 from start_bot import quotes
+from .main_functionals import trans
 
 
 """ My favorites """
@@ -18,6 +19,7 @@ async def add_favorite(callback_query: types.CallbackQuery):
     # Getting user data
     username = callback_query.from_user.username
     user_data = ref.child(username).get()
+    user_language = user_data.get("language")
     user_list_favorite = user_data.get("favorite", [])
 
     # Append the new favorite to the list
@@ -29,23 +31,24 @@ async def add_favorite(callback_query: types.CallbackQuery):
     # Save the updated user_data in the database
     ref.child(username).update(user_data)
 
-    await callback_query.message.answer('Успішно добавленно 📝✅') 
+    await callback_query.message.answer(trans('Успішно добавленно 📝✅', dest=user_language).text) 
 
 
-@dp.message_handler(Text(equals=['Мої улюблені цитати 📝💖']))
+@dp.message_handler(Text(equals=['Мої улюблені цитати 📝💖', 'My favorite quotes 📝💖']))
 async def my_favorite(message: types.Message):
     
     # data user, getting list favorites quotes
     username = message.from_user.username
     user_data = ref.child(username).get()
     user_list_favorite = user_data.get("favorite")
+    user_language = user_data.get("language")
 
     if user_list_favorite:
 
         for num in user_list_favorite:
 
             btns_delete_favorite = [
-                [types.InlineKeyboardButton(text="Видалити з улюблених ❌", callback_data=f"delete_favorite_{num}")]
+                [types.InlineKeyboardButton(text=trans("Видалити з улюблених ❌", dest=user_language).text, callback_data=f"delete_favorite_{num}")]
             ]
             keyboard_btns = types.InlineKeyboardMarkup(inline_keyboard=btns_delete_favorite)
 
@@ -56,11 +59,11 @@ async def my_favorite(message: types.Message):
             category = quote["category"]
 
 
-            result = f"{text}\n Автор - {author}\n Категорія - {category}"
+            result = trans(f"{text}\n Автор - {author}\n Категорія - {category}").text
             await message.answer(result, reply_markup=keyboard_btns)
     
     else:
-        await message.answer("Ви нічого не добавили 😕")
+        await message.answer(trans("Ви нічого не добавили 😕").text)
 
 
 @dp.callback_query_handler(lambda c: c.data.startswith('delete_favorite_'))
@@ -72,6 +75,7 @@ async def delete_favorite(callback_query: types.CallbackQuery):
     # data user, getting list favorites quotes
     username = callback_query.from_user.username
     user_data = ref.child(username).get()
+    user_language = user_data.get("language")
     user_list_favorite = user_data.get("favorite", [])
 
     # delete quote
@@ -82,4 +86,4 @@ async def delete_favorite(callback_query: types.CallbackQuery):
 
     # Save the updated user_data in the database
     ref.child(username).update(user_data)    
-    await callback_query.message.answer('Видалено 🗑✅')
+    await callback_query.message.answer(trans('Видалено 🗑✅').text)
