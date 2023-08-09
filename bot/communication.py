@@ -1,19 +1,20 @@
 from aiogram import types
 from aiogram.dispatcher.filters import Text
+from aiogram.dispatcher import FSMContext
 
-from config import dp, bot, ref
+from config import dp, bot
 from .main_functionals import trans
 
 
 """ Сommunication """
 
 @dp.message_handler(Text(equals=["Зв'язок 💬", "Communication 💬"]))
-async def communication(message: types.Message):
+async def communication(message: types.Message, state: FSMContext):
 
-    # data user
-    username = message.from_user.username
-    user_data = ref.child(username).get()
-    user_language = user_data.get("language")
+    # getting data user
+    async with state.proxy() as data:
+        user_language = data.get('user_language')
+
 
     btns_communication = [
         [types.InlineKeyboardButton(text=trans('Підтримка', dest=user_language).text, callback_data='communication_support')],
@@ -25,14 +26,15 @@ async def communication(message: types.Message):
 
 
 @dp.callback_query_handler(lambda c: c.data.startswith('communication_'))
-async def choice_communication(callback_query: types.CallbackQuery):
+async def choice_communication(callback_query: types.CallbackQuery, state: FSMContext):
     """ We ask from the user write message, example: support or idea 
         after sending message, user who accept message users """
 
-    # data user
-    username = callback_query.from_user.username
-    user_data = ref.child(username).get()
-    user_language = user_data.get("language")
+
+    # getting data user
+    async with state.proxy() as data:
+        user_language = data.get('user_language')
+
 
     # type message
     await callback_query.answer()

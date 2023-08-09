@@ -11,7 +11,6 @@ import json
 
 from config import dp, ref
 
-#TODO: delete dupliacte code getting data user
 #TODO: added hand regimen
 
 # read file
@@ -27,6 +26,7 @@ with open(file_path, 'r', encoding='utf-8') as file:
 trans = Translator().translate
 
 """ Main functionals """
+""" Using "state: FSMContext" for pass variables between functions """
 
 # beginning menu
 @dp.message_handler(commands=['start'])
@@ -43,7 +43,7 @@ async def choose_languages(message: types.Message):
 
 
 @dp.message_handler(Text(equals=['Українська 🇺🇦', 'English 🇺🇸']))
-async def beginning_btns(message: types.Message):
+async def beginning_btns(message: types.Message, state: FSMContext):
 
     if message.text == "Українська 🇺🇦":
         language = "uk"
@@ -77,21 +77,34 @@ async def beginning_btns(message: types.Message):
         )
 
 
-
-@dp.message_handler(Text(equals=['Запуск ✈', 'Launch ✈']))
-async def launching(message: types.Message, state: FSMContext):
-    """ Send quotes from file, and inline btn 'add favorite', save in DB num quote """
-    
-    # save value False, if launching start loop, else stop. Pass next handler
-    async with state.proxy() as data:
-        data['should_stop'] = False    
-
-    # data user
-    username = message.from_user.username
     user_data = ref.child(username).get()
     user_time_quotes = user_data.get("time-quotes")
     user_category = user_data.get("category")
     user_language = user_data.get("language")
+    user_favorite = user_data.get("favorite")
+
+    # Save variables for other functions - data user
+    async with state.proxy() as data:
+        data['should_stop'] = False    
+        data['user_time_quotes'] = user_time_quotes
+        data['user_category'] = user_category
+        data['user_favorite'] = user_favorite
+        data['user_language'] = user_language
+
+
+@dp.message_handler(Text(equals=['Запуск ✈', 'Launch ✈']))
+async def launching(message: types.Message, state: FSMContext):
+    """ Send quotes from file, and inline btn 'add favorite', save in DB num quote """
+
+
+    # save value False, if launching start loop, else stop. Pass next handler. 
+    # Save variables for other functions - data user
+    async with state.proxy() as data:
+        data['should_stop'] = False   
+        user_time_quotes = data.get('user_time_quotes')
+        user_category = data.get('user_category')
+        user_language = data.get('user_language')
+        
 
     # send quote
     await message.answer(trans('Запустилося✅\n По стандарту, буде відправляти кожні пів години одну цитату, можете змінити в налаштуваннях', dest=user_language).text)
@@ -141,22 +154,19 @@ async def stop(message: types.Message, state: FSMContext):
     # save variable True, if user stopping loop 
     async with state.proxy() as data:
         data['should_stop'] = True
+        user_language = data.get('user_language')
 
-
-    # data user
-    username = message.from_user.username
-    user_data = ref.child(username).get()
-    user_language = user_data.get("language")
 
     await message.answer(trans('Зупинено ⏱❌', dest=user_language).text)
     
 
 @dp.message_handler(Text(equals=['Назад ⏪', 'Back ⏪']))
-async def btn_back(message: types.Message):
+async def btn_back(message: types.Message, state: FSMContext):
 
-    username = message.from_user.username
-    user_data = ref.child(username).get()
-    user_language = user_data.get("language")
+    # getting data user
+    async with state.proxy() as data:
+        user_language = data.get('user_language')
+
 
     # start buttons
     start_btns = [
