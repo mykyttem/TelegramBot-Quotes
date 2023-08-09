@@ -1,5 +1,6 @@
 from aiogram import types
 from aiogram.dispatcher.filters import Text
+from aiogram.dispatcher import FSMContext
 
 from config import dp, ref
 from .main_functionals import trans
@@ -8,12 +9,12 @@ from .main_functionals import trans
 """ Settings """
 
 @dp.message_handler(Text(equals=['Налаштування ⚙', 'Settings ⚙']))
-async def settings(message: types.Message):
+async def settings(message: types.Message, state: FSMContext):
 
-    # Getting user data
-    username = message.from_user.username
-    user_data = ref.child(username).get()
-    user_language = user_data.get("language")
+    # getting data user
+    async with state.proxy() as data:
+        user_language = data.get('user_language')
+
 
     btns_settings = [
         [types.KeyboardButton(text=trans('Час відправки цитати ⏱', dest=user_language).text)],
@@ -26,11 +27,12 @@ async def settings(message: types.Message):
 
 
 @dp.message_handler(Text(equals=['Час відправки цитати ⏱', 'Quote sending time ⏱']))
-async def time_send_quote(message: types.Message):
+async def time_send_quote(message: types.Message, state: FSMContext):
     # Getting user data
-    username = message.from_user.username
-    user_data = ref.child(username).get()
-    user_language = user_data.get("language")
+
+    # getting data user
+    async with state.proxy() as data:
+        user_language = data.get('user_language')
 
     btns_time = []
 
@@ -41,15 +43,16 @@ async def time_send_quote(message: types.Message):
 
     keyboard_btns = types.InlineKeyboardMarkup(inline_keyboard=btns_time)
 
-    await message.answer(trans('Оберіть через скільки часу вам відправляти', dest=user_language), reply_markup=keyboard_btns)
+    await message.answer(trans('Оберіть через скільки часу вам відправляти', dest=user_language).text, reply_markup=keyboard_btns)
 
 
 @dp.callback_query_handler(lambda c: c.data.startswith('time_'))
-async def choice_time(callback_query: types.CallbackQuery):
-    # Getting user data
-    username = callback_query.from_user.username
-    user_data = ref.child(username).get()
-    user_language = user_data.get("language")
+async def choice_time(callback_query: types.CallbackQuery, state: FSMContext):
+
+    # getting data user
+    async with state.proxy() as data:
+        user_language = data.get('user_language')
+
 
     await callback_query.answer()
 
@@ -71,12 +74,11 @@ async def choice_time(callback_query: types.CallbackQuery):
 
 
 @dp.message_handler(Text(equals=['Категорія 🧾', 'Category 🧾']))
-async def settings_category(message: types.Message):
+async def settings_category(message: types.Message, state: FSMContext):
 
-    # Getting user data
-    username = message.from_user.username
-    user_data = ref.child(username).get()
-    user_language = user_data.get("language")
+    # getting data user
+    async with state.proxy() as data:
+        user_language = data.get('user_language')
 
 
     btns_category = [
@@ -91,11 +93,11 @@ async def settings_category(message: types.Message):
 
 
 @dp.callback_query_handler(lambda c: c.data.startswith('category_'))
-async def choice_category_settings(callback_query: types.CallbackQuery):
-    # Getting user data
-    username = callback_query.from_user.username
-    user_data = ref.child(username).get()
-    user_language = user_data.get("language")
+async def choice_category_settings(callback_query: types.CallbackQuery, state: FSMContext):
+  
+    # getting data user
+    async with state.proxy() as data:
+        user_language = data.get('user_language')
 
     await callback_query.answer()
 

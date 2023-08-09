@@ -54,6 +54,7 @@ async def beginning_btns(message: types.Message, state: FSMContext):
     # start buttons
     start_btns = [
         [types.KeyboardButton(text=trans('Запуск ✈', dest=language).text)],
+        [types.KeyboardButton(text=trans('Ручний режим', dest=language).text)],
         [types.KeyboardButton(text=trans('Налаштування ⚙', dest=language).text)],
         [types.KeyboardButton(text=trans('Мої улюблені цитати 📝💖', dest=language).text)],
         [types.KeyboardButton(text=trans("Зв'язок 💬", dest=language).text)],
@@ -146,6 +147,41 @@ async def launching(message: types.Message, state: FSMContext):
 
         except IndexError:
             continue
+
+
+@dp.message_handler(Text(equals=['Ручний режим', 'Manual mode']))
+async def manual_mode(message: types.Message, state: FSMContext):
+
+    # getting data user
+    async with state.proxy() as data:
+        data['should_stop'] = False   
+        user_category = data.get('user_category')
+        user_language = data.get('user_language')
+
+
+    random_num = random.randint(0, 3000)
+
+
+    btns_add_favorite = [
+        [types.InlineKeyboardButton(text=trans("Добавити в улюблені 📝", dest=user_language).text, callback_data=f"add_favorite_{random_num}")]
+    ]
+    keyboard_btns = types.InlineKeyboardMarkup(inline_keyboard=btns_add_favorite)
+
+    quote = quotes[random_num]
+    text = quote["text"]
+    author = quote["author"]
+    category = quote["category"]
+
+
+    if user_category == "Всі":
+
+        result = trans(f"{text}\n Автор - {author}\n Категорія - {category}", dest=user_language).text
+        await message.answer(result, reply_markup=keyboard_btns)
+
+    elif user_category == category:
+
+        result = trans(f"{text}\n Автор - {author}\n Категорія - {category}", dest=user_language).text
+        await message.answer(result, reply_markup=keyboard_btns)
 
 
 @dp.message_handler(Text(equals=['Зупинити ❌', 'Stop ❌']))
