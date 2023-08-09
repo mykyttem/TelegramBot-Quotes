@@ -2,6 +2,8 @@ from aiogram import types
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
 
+from googletrans import Translator
+
 import random
 import asyncio
 import os
@@ -9,6 +11,8 @@ import json
 
 from config import dp, ref
 
+#TODO: delete dupliacte code getting data user
+#TODO: added hand regimen
 
 # read file
 folder_path = "results_scrapy"
@@ -19,27 +23,48 @@ file_path = os.path.join(folder_path, "quotes.json")
 with open(file_path, 'r', encoding='utf-8') as file:
     quotes = json.load(file)
 
-
+# translate
+trans = Translator().translate
 
 """ Main functionals """
 
-# start buttons
-start_btns = [
-    [types.KeyboardButton(text='Запуск ✈')],
-    [types.KeyboardButton(text='Налаштування ⚙')],
-    [types.KeyboardButton(text='Мої улюблені цитати 📝💖')],
-    [types.KeyboardButton(text="Зв'язок 💬")],
-    [types.KeyboardButton(text='Зупинити ❌')],
-]
-keyboard_start_btns = types.ReplyKeyboardMarkup(keyboard=start_btns, resize_keyboard=True)
-
 # beginning menu
 @dp.message_handler(commands=['start'])
-async def start_btns(message: types.Message):
+async def choose_languages(message: types.Message):
 
-    await message.answer(f'Привіт {message.from_user.first_name}, це бот, якого задача мотивувати тебе\n В налаштуваннях можеш налаштувати систему сповіщень або інше', 
-                        reply_markup=keyboard_start_btns
-    )
+    btns_language = [
+        [types.KeyboardButton(text='Українська 🇺🇦')],
+        [types.KeyboardButton(text='English 🇺🇸')]
+    ]
+
+    keyboard_start_languages = types.ReplyKeyboardMarkup(keyboard=btns_language, resize_keyboard=True)
+
+    await message.answer(f'Оберіть мову\n choose a language', reply_markup=keyboard_start_languages)
+
+
+@dp.message_handler(Text(equals=['Українська 🇺🇦', 'English 🇺🇸']))
+async def beginning_btns(message: types.Message):
+
+    if message.text == "Українська 🇺🇦":
+        language = "uk"
+    elif message.text == "English 🇺🇸":
+        language = "en"
+
+
+    # start buttons
+    start_btns = [
+        [types.KeyboardButton(text=trans('Запуск ✈', dest=language).text)],
+        [types.KeyboardButton(text=trans('Налаштування ⚙', dest=language).text)],
+        [types.KeyboardButton(text=trans('Мої улюблені цитати 📝💖', dest=language).text)],
+        [types.KeyboardButton(text=trans("Зв'язок 💬", dest=language).text)],
+        [types.KeyboardButton(text=trans('Зупинити ❌', dest=language).text)],
+    ]
+    keyboard_start_btns = types.ReplyKeyboardMarkup(keyboard=start_btns, resize_keyboard=True)
+
+
+    txt = trans("Привіт, це бот, якого задача мотивувати тебе В налаштуваннях можеш налаштувати систему сповіщень або інше", dest=language).text
+    await message.answer(txt, reply_markup=keyboard_start_btns)
+
 
     # Getting data for user
     id_user = str(message.from_id)
@@ -48,11 +73,12 @@ async def start_btns(message: types.Message):
     # push data
     if not ref.child(username).get():
         ref.child(username).set(
-            {"id": id_user, "time-quotes": 1800, "favorite": [0], "category": "Всі"}
+            {"id": id_user, "time-quotes": 1800, "favorite": [0], "category": "Всі", "language": language} 
         )
 
 
-@dp.message_handler(Text(equals=['Запуск ✈']))
+
+@dp.message_handler(Text(equals=['Запуск ✈', 'Launch ✈']))
 async def launching(message: types.Message, state: FSMContext):
     """ Send quotes from file, and inline btn 'add favorite', save in DB num quote """
     
@@ -65,9 +91,10 @@ async def launching(message: types.Message, state: FSMContext):
     user_data = ref.child(username).get()
     user_time_quotes = user_data.get("time-quotes")
     user_category = user_data.get("category")
+    user_language = user_data.get("language")
 
     # send quote
-    await message.answer('Запустилося✅\n По стандарту, буде відправляти кожні пів години одну цитату, можете змінити в налаштуваннях')
+    await message.answer(trans('Запустилося✅\n По стандарту, буде відправляти кожні пів години одну цитату, можете змінити в налаштуваннях', dest=user_language).text)
 
     while True:
         data = await state.get_data()
@@ -80,7 +107,7 @@ async def launching(message: types.Message, state: FSMContext):
         
         try:
             btns_add_favorite = [
-                [types.InlineKeyboardButton(text="Добавити в улюблені 📝", callback_data=f"add_favorite_{random_num}")]
+                [types.InlineKeyboardButton(text=trans("Добавити в улюблені 📝").text, callback_data=f"add_favorite_{random_num}")]
             ]
             keyboard_btns = types.InlineKeyboardMarkup(inline_keyboard=btns_add_favorite)
 
@@ -91,14 +118,14 @@ async def launching(message: types.Message, state: FSMContext):
 
             if user_category == "Всі":
 
-                result = f"{text}\n Автор - {author}\n Категорія - {category}"
+                result = trans(f"{text}\n Автор - {author}\n Категорія - {category}").text
 
                 await message.answer(result, reply_markup=keyboard_btns)
                 await asyncio.sleep(user_time_quotes)
 
             elif user_category == category:
 
-                result = f"{text}\n Автор - {author}\n Категорія - {category}"
+                result = trans(f"{text}\n Автор - {author}\n Категорія - {category}").text
 
                 await message.answer(result, reply_markup=keyboard_btns)
                 await asyncio.sleep(user_time_quotes)
@@ -108,16 +135,28 @@ async def launching(message: types.Message, state: FSMContext):
             continue
 
 
-@dp.message_handler(Text(equals=['Зупинити ❌']))
+@dp.message_handler(Text(equals=['Зупинити ❌', 'Stop ❌']))
 async def stop(message: types.Message, state: FSMContext):
 
     # save variable True, if user stopping loop 
     async with state.proxy() as data:
         data['should_stop'] = True
 
-    await message.answer('Зупинено ⏱❌')
+
+    # data user
+    username = message.from_user.username
+    user_data = ref.child(username).get()
+    user_language = user_data.get("language")
+
+    await message.answer(trans('Зупинено ⏱❌', dest=user_language).text)
     
 
-@dp.message_handler(Text(equals=['Назад ⏪']))
+@dp.message_handler(Text(equals=['Назад ⏪', 'back ⏪']))
 async def btn_back(message: types.Message):
-    await message.answer('Головне меню', reply_markup=keyboard_start_btns)
+
+    username = message.from_user.username
+    user_data = ref.child(username).get()
+    user_language = user_data.get("language")
+
+    await message.answer(trans('Головне меню', dest=user_language).text)
+    beginning_btns(message)
