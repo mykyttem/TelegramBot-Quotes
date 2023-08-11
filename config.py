@@ -8,7 +8,7 @@ from firebase_admin import credentials, db
 
 """ Bot """
 
-API_TOKEN = 'your_token'
+API_TOKEN = '6119096459:AAHs7sc7jpotTyuwqdfb1gaU0_2QNwGqxAs'
 
 
 logging.basicConfig(level=logging.INFO)
@@ -22,7 +22,7 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 """ fireBase """
 
 
-cred = credentials.Certificate("file.json")
-firebase_admin.initialize_app(cred, {"databaseURL": "your url"})
+cred = credentials.Certificate("telegrambot-quotes-firebase-adminsdk-z5ze0-e4cb508be3.json")
+firebase_admin.initialize_app(cred, {"databaseURL": "https://telegrambot-quotes-default-rtdb.firebaseio.com/"})
 
 ref = db.reference('/')

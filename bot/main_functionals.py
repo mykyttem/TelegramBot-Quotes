@@ -195,6 +195,7 @@ async def btn_back(message: types.Message, state: FSMContext):
     # start buttons
     start_btns = [
         [types.KeyboardButton(text=l_trans('Запуск ✈', user_language))],
+        [types.KeyboardButton(text=l_trans('Ручний режим', user_language))],
         [types.KeyboardButton(text=l_trans('Налаштування', user_language))],
         [types.KeyboardButton(text=l_trans('Мої улюблені цитати 📝💖', user_language))],
         [types.KeyboardButton(text=l_trans("Зв'язок 💬", user_language))],
