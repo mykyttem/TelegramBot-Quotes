@@ -3,7 +3,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
 
 from config import dp, ref
-from .main_functionals import trans
+from .main_functionals import l_trans
 
 
 """ Settings """
@@ -17,13 +17,13 @@ async def settings(message: types.Message, state: FSMContext):
 
 
     btns_settings = [
-        [types.KeyboardButton(text=trans('Час відправки цитати ⏱', dest=user_language).text)],
-        [types.KeyboardButton(text=trans('Категорія 🧾', dest=user_language).text)],
-        [types.KeyboardButton(text=trans('Назад ⏪', dest=user_language).text)]
+        [types.KeyboardButton(text=l_trans('Час відправки цитати ⏱', user_language))],
+        [types.KeyboardButton(text=l_trans('Категорія 🧾', user_language))],
+        [types.KeyboardButton(text=l_trans('Назад ⏪', user_language))]
     ]
 
     keyboard_btns = types.ReplyKeyboardMarkup(keyboard=btns_settings, resize_keyboard=True)
-    await message.answer(trans('Налаштування', dest=user_language).text, reply_markup=keyboard_btns)
+    await message.answer(l_trans('Налаштування', user_language), reply_markup=keyboard_btns)
 
 
 @dp.message_handler(Text(equals=['Час відправки цитати ⏱', 'Quote sending time ⏱']))
@@ -39,11 +39,11 @@ async def time_send_quote(message: types.Message, state: FSMContext):
     # Add buttons for 30 minutes and hours 1 to 24 in separate rows
     btns_time.append([types.InlineKeyboardButton(text='0.5', callback_data='time_0.5')])
     for i in range(1, 25):
-        btns_time.append([types.InlineKeyboardButton(text=trans(f'{i} години', dest=user_language).text, callback_data=f'time_{i}')])
+        btns_time.append([types.InlineKeyboardButton(text=f'{i} години / hours', callback_data=f'time_{i}')])
 
     keyboard_btns = types.InlineKeyboardMarkup(inline_keyboard=btns_time)
 
-    await message.answer(trans('Оберіть через скільки часу вам відправляти', dest=user_language).text, reply_markup=keyboard_btns)
+    await message.answer(l_trans('Оберіть через скільки часу вам відправляти', user_language), reply_markup=keyboard_btns)
 
 
 @dp.callback_query_handler(lambda c: c.data.startswith('time_'))
@@ -70,7 +70,7 @@ async def choice_time(callback_query: types.CallbackQuery, state: FSMContext):
     user_data["time-quotes"] = int(seconds)
     ref.child(username).update(user_data)
 
-    await callback_query.message.answer(trans('Налаштування оновлені ✅', dest=user_language).text) 
+    await callback_query.message.answer(l_trans('Налаштування оновлені ✅', user_language)) 
 
 
 @dp.message_handler(Text(equals=['Категорія 🧾', 'Category 🧾']))
@@ -82,14 +82,14 @@ async def settings_category(message: types.Message, state: FSMContext):
 
 
     btns_category = [
-        [types.InlineKeyboardButton(text=trans('з Книг 📚', dest=user_language).text, callback_data='category_з Книг')],
-        [types.InlineKeyboardButton(text=trans('з Фільмів 🎬', dest=user_language).text, callback_data='category_з Фільмів')],
-        [types.InlineKeyboardButton(text=trans('Відомих людей', dest=user_language).text, callback_data='category_Відомих людей')],
-        [types.InlineKeyboardButton(text=trans('Всі', dest=user_language).text, callback_data='category_Всі')],
+        [types.InlineKeyboardButton(text=l_trans('з Книг 📚', user_language), callback_data='category_з Книг')],
+        [types.InlineKeyboardButton(text=l_trans('з Фільмів 🎬', user_language), callback_data='category_з Фільмів')],
+        [types.InlineKeyboardButton(text=l_trans('Відомих людей', user_language), callback_data='category_Відомих людей')],
+        [types.InlineKeyboardButton(text=l_trans('Всі', user_language), callback_data='category_Всі')],
     ]
 
     keyboard_btns = types.InlineKeyboardMarkup(inline_keyboard=btns_category)
-    await message.answer(trans('Оберіть категорію цитат', dest=user_language).text, reply_markup=keyboard_btns)
+    await message.answer(l_trans('Оберіть категорію цитат', user_language), reply_markup=keyboard_btns)
 
 
 @dp.callback_query_handler(lambda c: c.data.startswith('category_'))
@@ -112,5 +112,5 @@ async def choice_category_settings(callback_query: types.CallbackQuery, state: F
     ref.child(username).update(user_data)
 
     
-    await callback_query.message.answer(trans('Налаштування оновлені ✅', dest=user_language).text) 
-    await callback_query.message.answer(trans(select_category, dest=user_language).text ) 
+    await callback_query.message.answer(l_trans('Налаштування оновлені ✅', user_language)) 
+    await callback_query.message.answer(l_trans(select_category, user_language)) 

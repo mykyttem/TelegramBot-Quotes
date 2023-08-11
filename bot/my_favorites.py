@@ -3,7 +3,7 @@ from aiogram.dispatcher.filters import Text
 
 from config import dp, ref
 from start_bot import quotes
-from .main_functionals import trans
+from .main_functionals import l_trans, trans_google
 
 
 """ My favorites """
@@ -31,7 +31,7 @@ async def add_favorite(callback_query: types.CallbackQuery):
     # Save the updated user_data in the database
     ref.child(username).update(user_data)
 
-    await callback_query.message.answer(trans('Успішно добавленно 📝✅', dest=user_language).text) 
+    await callback_query.message.answer(l_trans('Успішно добавленно 📝✅', user_language)) 
 
 
 @dp.message_handler(Text(equals=['Мої улюблені цитати 📝💖', 'My favorite quotes 📝💖']))
@@ -48,7 +48,7 @@ async def my_favorite(message: types.Message):
         for num in user_list_favorite:
 
             btns_delete_favorite = [
-                [types.InlineKeyboardButton(text=trans("Видалити з улюблених ❌", dest=user_language).text, callback_data=f"delete_favorite_{num}")]
+                [types.InlineKeyboardButton(text=l_trans("Видалити з улюблених ❌", user_language), callback_data=f"delete_favorite_{num}")]
             ]
             keyboard_btns = types.InlineKeyboardMarkup(inline_keyboard=btns_delete_favorite)
 
@@ -59,11 +59,11 @@ async def my_favorite(message: types.Message):
             category = quote["category"]
 
 
-            result = trans(f"{text}\n Автор - {author}\n Категорія - {category}").text
+            result = trans_google(f"{text}\n Автор - {author}\n Категорія - {category}", dest=user_language).text
             await message.answer(result, reply_markup=keyboard_btns)
     
     else:
-        await message.answer(trans("Ви нічого не добавили 😕").text)
+        await message.answer(l_trans("Ви нічого не добавили 😕", user_language))
 
 
 @dp.callback_query_handler(lambda c: c.data.startswith('delete_favorite_'))
@@ -86,4 +86,4 @@ async def delete_favorite(callback_query: types.CallbackQuery):
 
     # Save the updated user_data in the database
     ref.child(username).update(user_data)    
-    await callback_query.message.answer(trans('Видалено 🗑✅').text)
+    await callback_query.message.answer(l_trans('Видалено 🗑✅', user_language))

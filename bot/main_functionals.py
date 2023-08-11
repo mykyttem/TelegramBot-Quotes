@@ -2,31 +2,19 @@ from aiogram import types
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
 
-from googletrans import Translator
-
 import random
 import asyncio
-import os
-import json
 
 from config import dp, ref
+from tools import l_trans, trans_google, quotes
 
-#TODO: added hand regimen
 
-# read file
-folder_path = "results_scrapy"
+#FIXME: if you do not start from the start, the user's language choice will not be found
 
-# path file
-file_path = os.path.join(folder_path, "quotes.json")
 
-with open(file_path, 'r', encoding='utf-8') as file:
-    quotes = json.load(file)
-
-# translate
-trans = Translator().translate
-
-""" Main functionals """
-""" Using "state: FSMContext" for pass variables between functions """
+""" Main functionals 
+    Using "state: FSMContext" for pass variables between functions 
+"""
 
 # beginning menu
 @dp.message_handler(commands=['start'])
@@ -53,17 +41,17 @@ async def beginning_btns(message: types.Message, state: FSMContext):
 
     # start buttons
     start_btns = [
-        [types.KeyboardButton(text=trans('Запуск ✈', dest=language).text)],
-        [types.KeyboardButton(text=trans('Ручний режим', dest=language).text)],
-        [types.KeyboardButton(text=trans('Налаштування ⚙', dest=language).text)],
-        [types.KeyboardButton(text=trans('Мої улюблені цитати 📝💖', dest=language).text)],
-        [types.KeyboardButton(text=trans("Зв'язок 💬", dest=language).text)],
-        [types.KeyboardButton(text=trans('Зупинити ❌', dest=language).text)],
+        [types.KeyboardButton(text=l_trans('Запуск ✈', language))],
+        [types.KeyboardButton(text=l_trans('Ручний режим', language))],
+        [types.KeyboardButton(text=l_trans('Налаштування', language))],
+        [types.KeyboardButton(text=l_trans('Мої улюблені цитати 📝💖', language))],
+        [types.KeyboardButton(text=l_trans("Зв'язок 💬", language))],
+        [types.KeyboardButton(text=l_trans('Зупинити ❌', language))],
     ]
     keyboard_start_btns = types.ReplyKeyboardMarkup(keyboard=start_btns, resize_keyboard=True)
 
 
-    txt = trans("Привіт, це бот, якого задача мотивувати тебе В налаштуваннях можеш налаштувати систему сповіщень або інше", dest=language).text
+    txt = l_trans("Привіт, це бот, якого задача мотивувати тебе В налаштуваннях можеш налаштувати систему сповіщень або інше", language)
     await message.answer(txt, reply_markup=keyboard_start_btns)
 
 
@@ -108,7 +96,7 @@ async def launching(message: types.Message, state: FSMContext):
         
 
     # send quote
-    await message.answer(trans('Запустилося✅\n По стандарту, буде відправляти кожні пів години одну цитату, можете змінити в налаштуваннях', dest=user_language).text)
+    await message.answer(l_trans('Запустилося✅\n По стандарту, буде відправляти кожні пів години одну цитату, можете змінити в налаштуваннях', user_language))
 
     while True:
         data = await state.get_data()
@@ -121,7 +109,7 @@ async def launching(message: types.Message, state: FSMContext):
         
         try:
             btns_add_favorite = [
-                [types.InlineKeyboardButton(text=trans("Добавити в улюблені 📝").text, callback_data=f"add_favorite_{random_num}")]
+                [types.InlineKeyboardButton(text=l_trans("Добавити в улюблені 📝", user_language), callback_data=f"add_favorite_{random_num}")]
             ]
             keyboard_btns = types.InlineKeyboardMarkup(inline_keyboard=btns_add_favorite)
 
@@ -132,14 +120,14 @@ async def launching(message: types.Message, state: FSMContext):
 
             if user_category == "Всі":
 
-                result = trans(f"{text}\n Автор - {author}\n Категорія - {category}").text
+                result = trans_google(f"{text}\n Автор - {author}\n Категорія - {category}", dest=user_language).text
 
                 await message.answer(result, reply_markup=keyboard_btns)
                 await asyncio.sleep(user_time_quotes)
 
             elif user_category == category:
 
-                result = trans(f"{text}\n Автор - {author}\n Категорія - {category}").text
+                result = trans_google(f"{text}\n Автор - {author}\n Категорія - {category}", dest=user_language).text
 
                 await message.answer(result, reply_markup=keyboard_btns)
                 await asyncio.sleep(user_time_quotes)
@@ -163,7 +151,7 @@ async def manual_mode(message: types.Message, state: FSMContext):
 
 
     btns_add_favorite = [
-        [types.InlineKeyboardButton(text=trans("Добавити в улюблені 📝", dest=user_language).text, callback_data=f"add_favorite_{random_num}")]
+        [types.InlineKeyboardButton(text=l_trans("Добавити в улюблені 📝", user_language), callback_data=f"add_favorite_{random_num}")]
     ]
     keyboard_btns = types.InlineKeyboardMarkup(inline_keyboard=btns_add_favorite)
 
@@ -175,12 +163,12 @@ async def manual_mode(message: types.Message, state: FSMContext):
 
     if user_category == "Всі":
 
-        result = trans(f"{text}\n Автор - {author}\n Категорія - {category}", dest=user_language).text
+        result = trans_google(f"{text}\n Автор - {author}\n Категорія - {category}", dest=user_language).text
         await message.answer(result, reply_markup=keyboard_btns)
 
     elif user_category == category:
 
-        result = trans(f"{text}\n Автор - {author}\n Категорія - {category}", dest=user_language).text
+        result = trans_google(f"{text}\n Автор - {author}\n Категорія - {category}", dest=user_language).text
         await message.answer(result, reply_markup=keyboard_btns)
 
 
@@ -193,7 +181,7 @@ async def stop(message: types.Message, state: FSMContext):
         user_language = data.get('user_language')
 
 
-    await message.answer(trans('Зупинено ⏱❌', dest=user_language).text)
+    await message.answer(l_trans('Зупинено ⏱❌', user_language))
     
 
 @dp.message_handler(Text(equals=['Назад ⏪', 'Back ⏪']))
@@ -206,13 +194,13 @@ async def btn_back(message: types.Message, state: FSMContext):
 
     # start buttons
     start_btns = [
-        [types.KeyboardButton(text=trans('Запуск ✈', dest=user_language).text)],
-        [types.KeyboardButton(text=trans('Налаштування ⚙', dest=user_language).text)],
-        [types.KeyboardButton(text=trans('Мої улюблені цитати 📝💖', dest=user_language).text)],
-        [types.KeyboardButton(text=trans("Зв'язок 💬", dest=user_language).text)],
-        [types.KeyboardButton(text=trans('Зупинити ❌', dest=user_language).text)],
+        [types.KeyboardButton(text=l_trans('Запуск ✈', user_language))],
+        [types.KeyboardButton(text=l_trans('Налаштування', user_language))],
+        [types.KeyboardButton(text=l_trans('Мої улюблені цитати 📝💖', user_language))],
+        [types.KeyboardButton(text=l_trans("Зв'язок 💬", user_language))],
+        [types.KeyboardButton(text=l_trans('Зупинити ❌', user_language))],
     ]
     keyboard_start_btns = types.ReplyKeyboardMarkup(keyboard=start_btns, resize_keyboard=True)
 
 
-    await message.answer(trans('Головне меню', dest=user_language).text, reply_markup=keyboard_start_btns)
+    await message.answer(l_trans('Головне меню', user_language), reply_markup=keyboard_start_btns)  

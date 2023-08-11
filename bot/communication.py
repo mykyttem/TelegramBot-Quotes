@@ -3,8 +3,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
 
 from config import dp, bot
-from .main_functionals import trans
-
+from .main_functionals import l_trans
 
 """ Сommunication """
 
@@ -17,12 +16,12 @@ async def communication(message: types.Message, state: FSMContext):
 
 
     btns_communication = [
-        [types.InlineKeyboardButton(text=trans('Підтримка', dest=user_language).text, callback_data='communication_support')],
-        [types.InlineKeyboardButton(text=trans('Пропозиція або Ідея', dest=user_language).text, callback_data='communication_idea')],
+        [types.InlineKeyboardButton(text=l_trans('Підтримка', user_language), callback_data='communication_support')],
+        [types.InlineKeyboardButton(text=l_trans('Пропозиція або Ідея', user_language), callback_data='communication_idea')],
     ]
 
     keyboard_btns = types.InlineKeyboardMarkup(inline_keyboard=btns_communication)
-    await message.answer(trans('Оберіть вам потрібна підтримка, чи у вас є ідея?', dest=user_language).text, reply_markup=keyboard_btns)
+    await message.answer(l_trans('Оберіть вам потрібна підтримка, чи у вас є ідея?', user_language), reply_markup=keyboard_btns)
 
 
 @dp.callback_query_handler(lambda c: c.data.startswith('communication_'))
@@ -42,7 +41,7 @@ async def choice_communication(callback_query: types.CallbackQuery, state: FSMCo
 
     # user write text
     username = callback_query.from_user.username
-    await callback_query.message.answer(trans("Введіть повідомлення", dest=user_language).text)
+    await callback_query.message.answer(l_trans("Введіть повідомлення", user_language))
 
     # sending message
     @dp.message_handler(content_types=types.ContentTypes.TEXT)
@@ -50,9 +49,9 @@ async def choice_communication(callback_query: types.CallbackQuery, state: FSMCo
         user_text = message.text 
 
         # id who accept message from users
-        await bot.send_message("id", trans(f"""
+        await bot.send_message("id", f"""
             Повідомлення від користувача - @{username}
             Тип - {choice_communication}
             Текст:
             {user_text}
-        """, dest=user_language).text)
+        """)
