@@ -8,7 +8,7 @@ from firebase_admin import credentials, db
 
 """ Bot """
 
-API_TOKEN = '6119096459:AAHs7sc7jpotTyuwqdfb1gaU0_2QNwGqxAs'
+API_TOKEN = 'your_token'
 
 
 logging.basicConfig(level=logging.INFO)
